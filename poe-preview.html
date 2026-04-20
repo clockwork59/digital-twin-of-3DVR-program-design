@@ -1,0 +1,422 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta name="x-poe-datastore-behavior" content="local_only"><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlphaGo搜索树动画</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        
+        #canvas {
+            display: block;
+        }
+        
+        .title {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #fff;
+            font-size: 24px;
+            z-index: 100;
+        }
+    </style>
+<script src="https://puc.poecdn.net/authenticated_preview_page/syncedState.bd4eeeb8e8e02052ee92.js"></script></head>
+<body>
+    <div class="title">AlphaGo 蒙特卡洛搜索树</div>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        // 树节点类
+        class TreeNode {
+            constructor(x, y, level, parent = null) {
+                this.x = x;
+                this.y = y;
+                this.level = level;
+                this.parent = parent;
+                this.children = [];
+                this.isActive = true; // 立即激活
+                this.activation = 0;
+                this.targetActivation = 0;
+                this.radius = 4 + Math.random() * 3;
+                this.value = Math.random();
+                this.visitCount = 0;
+                this.maxChildren = 2 + Math.floor(Math.random() * 3);
+                this.growthCooldown = 0;
+                this.lastGrowthTime = 0;
+            }
+            
+            update(time) {
+                // 激活值平滑变化
+                this.activation += (this.targetActivation - this.activation) * 0.08;
+                
+                // 生长冷却时间递减
+                if (this.growthCooldown > 0) {
+                    this.growthCooldown--;
+                }
+                
+                // 自动生长条件
+                if (this.isActive && 
+                    this.children.length < this.maxChildren && 
+                    this.level < 6 && 
+                    this.growthCooldown <= 0 &&
+                    time - this.lastGrowthTime > 30) {
+                    
+                    if (Math.random() < 0.05) { // 5% 概率生长
+                        this.growChild(time);
+                    }
+                }
+            }
+            
+            growChild(time) {
+                // 计算子节点角度
+                const angleRange = Math.PI * 0.8; // 144度扇形
+                const baseAngle = this.parent ? 
+                    Math.atan2(this.y - this.parent.y, this.x - this.parent.x) : 0;
+                
+                let childAngle;
+                if (this.children.length === 0) {
+                    // 第一个子节点，随机方向但偏向右侧
+                    childAngle = baseAngle + (Math.random() - 0.3) * angleRange;
+                } else {
+                    // 后续子节点，在扇形范围内分布
+                    const step = angleRange / this.maxChildren;
+                    childAngle = baseAngle - angleRange/2 + step * this.children.length + 
+                                (Math.random() - 0.5) * step * 0.5;
+                }
+                
+                const distance = 60 + Math.random() * 40;
+                const childX = this.x + Math.cos(childAngle) * distance;
+                const childY = this.y + Math.sin(childAngle) * distance;
+                
+                // 边界检查
+                if (childX > 50 && childX < canvas.width - 50 && 
+                    childY > 50 && childY < canvas.height - 50) {
+                    
+                    const child = new TreeNode(childX, childY, this.level + 1, this);
+                    child.targetActivation = 0.3; // 新节点初始激活
+                    this.children.push(child);
+                    allNodes.push(child);
+                    
+                    this.lastGrowthTime = time;
+                    this.growthCooldown = 20 + Math.random() * 40;
+                    
+                    console.log(`新节点创建: 层级${child.level}, 总节点数: ${allNodes.length}`);
+                }
+            }
+            
+            activate(intensity = 1) {
+                this.targetActivation = Math.min(1, this.targetActivation + intensity);
+                this.visitCount++;
+                
+                // 向父节点传播
+                if (this.parent && intensity > 0.3) {
+                    this.parent.activate(intensity * 0.7);
+                }
+            }
+            
+            draw() {
+                const alpha = Math.max(0.2, this.activation);
+                const size = this.radius * (0.5 + this.activation * 0.5);
+                
+                // 根据层级和访问次数确定颜色
+                const hue = (this.level * 30 + this.value * 60) % 360;
+                const saturation = 60 + this.activation * 40;
+                const lightness = 40 + this.visitCount * 5;
+                
+                // 节点光晕
+                if (alpha > 0.1) {
+                    const glowSize = size * 3;
+                    const gradient = ctx.createRadialGradient(
+                        this.x, this.y, 0, 
+                        this.x, this.y, glowSize
+                    );
+                    gradient.addColorStop(0, `hsla(${hue}, ${saturation}%, ${lightness}%, ${alpha * 0.8})`);
+                    gradient.addColorStop(1, `hsla(${hue}, ${saturation}%, ${lightness}%, 0)`);
+                    
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, glowSize, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // 节点核心
+                ctx.fillStyle = `hsla(${hue}, ${saturation + 20}%, ${lightness + 20}%, ${alpha})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 节点边框
+                if (this.activation > 0.5) {
+                    ctx.strokeStyle = `hsla(${hue}, 100%, 80%, ${alpha})`;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, size + 2, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+                
+                // 访问计数
+                if (this.visitCount > 0) {
+                    ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.9})`;
+                    ctx.font = '12px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(this.visitCount.toString(), this.x, this.y - size - 8);
+                }
+                
+                // 绘制到父节点的连接
+                if (this.parent) {
+                    this.drawConnection();
+                }
+            }
+            
+            drawConnection() {
+                const parentAlpha = Math.max(0.2, this.parent.activation);
+                const childAlpha = Math.max(0.2, this.activation);
+                const alpha = Math.min(parentAlpha, childAlpha);
+                
+                if (alpha < 0.1) return;
+                
+                const hue = ((this.level - 1) * 30 + this.parent.value * 60) % 360;
+                const lineWidth = 1 + alpha * 2;
+                
+                ctx.strokeStyle = `hsla(${hue}, 70%, 60%, ${alpha * 0.8})`;
+                ctx.lineWidth = lineWidth;
+                ctx.beginPath();
+                ctx.moveTo(this.parent.x, this.parent.y);
+                ctx.lineTo(this.x, this.y);
+                ctx.stroke();
+                
+                // 数据流动效果
+                if (alpha > 0.6 && Math.random() < 0.1) {
+                    this.drawDataFlow();
+                }
+            }
+            
+            drawDataFlow() {
+                const progress = (Date.now() % 1500) / 1500;
+                const x = this.parent.x + (this.x - this.parent.x) * progress;
+                const y = this.parent.y + (this.y - this.parent.y) * progress;
+                
+                const gradient = ctx.createRadialGradient(x, y, 0, x, y, 8);
+                gradient.addColorStop(0, 'rgba(255, 255, 100, 0.9)');
+                gradient.addColorStop(1, 'rgba(255, 255, 100, 0)');
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // 搜索算法类
+        class MonteCarloSearch {
+            constructor(rootX, rootY) {
+                this.root = new TreeNode(rootX, rootY, 0);
+                this.root.targetActivation = 1;
+                this.root.activation = 1;
+                this.searchInterval = 80; // 搜索间隔
+                this.lastSearchTime = 0;
+                this.currentSearchPath = [];
+            }
+            
+            update(time) {
+                // 定期执行搜索
+                if (time - this.lastSearchTime > this.searchInterval) {
+                    this.performSearch(time);
+                    this.lastSearchTime = time;
+                }
+                
+                // 衰减所有节点激活值
+                if (time % 200 === 0) {
+                    allNodes.forEach(node => {
+                        node.targetActivation *= 0.9;
+                    });
+                }
+            }
+            
+            performSearch(time) {
+                // 选择路径
+                const selectedNode = this.selectLeafNode(this.root);
+                
+                // 扩展节点
+                if (selectedNode.children.length < selectedNode.maxChildren && 
+                    selectedNode.level < 6) {
+                    selectedNode.growChild(time);
+                }
+                
+                // 激活搜索路径
+                this.activateSearchPath(selectedNode);
+                
+                // 模拟评估
+                const evaluation = Math.random();
+                this.backpropagate(selectedNode, evaluation);
+            }
+            
+            selectLeafNode(node) {
+                // 如果是叶子节点或达到最大深度，返回当前节点
+                if (node.children.length === 0 || node.level >= 6) {
+                    return node;
+                }
+                
+                // UCB1选择
+                let bestChild = null;
+                let bestValue = -Infinity;
+                
+                node.children.forEach(child => {
+                    const exploitation = child.value;
+                    const exploration = child.visitCount === 0 ? Infinity : 
+                        Math.sqrt(2 * Math.log(node.visitCount + 1) / child.visitCount);
+                    const ucbValue = exploitation + exploration;
+                    
+                    if (ucbValue > bestValue) {
+                        bestValue = ucbValue;
+                        bestChild = child;
+                    }
+                });
+                
+                return bestChild ? this.selectLeafNode(bestChild) : node;
+            }
+            
+            activateSearchPath(targetNode) {
+                this.currentSearchPath = [];
+                let current = targetNode;
+                
+                while (current) {
+                    this.currentSearchPath.push(current);
+                    current.activate(0.8);
+                    current = current.parent;
+                }
+            }
+            
+            backpropagate(node, value) {
+                let current = node;
+                while (current) {
+                    current.visitCount++;
+                    current.value = (current.value * (current.visitCount - 1) + value) / current.visitCount;
+                    current = current.parent;
+                }
+            }
+        }
+        
+        // 全局变量
+        let allNodes = [];
+        let mctsSearch;
+        let time = 0;
+        
+        // 初始化
+        function init() {
+            const rootX = 150;
+            const rootY = canvas.height / 2;
+            
+            mctsSearch = new MonteCarloSearch(rootX, rootY);
+            allNodes = [mctsSearch.root];
+            
+            console.log("搜索树初始化完成");
+        }
+        
+        // 动画循环
+        function animate() {
+            time++;
+            
+            // 清空画布
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 更新搜索算法
+            mctsSearch.update(time);
+            
+            // 更新所有节点
+            allNodes.forEach(node => {
+                node.update(time);
+            });
+            
+            // 绘制所有节点（先绘制连接，再绘制节点）
+            allNodes.forEach(node => {
+                if (node.parent) {
+                    node.drawConnection();
+                }
+            });
+            
+            allNodes.forEach(node => {
+                node.draw();
+            });
+            
+            // 绘制统计信息
+            drawStats();
+            
+            requestAnimationFrame(animate);
+        }
+        
+        function drawStats() {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'left';
+            
+            const maxLevel = allNodes.length > 0 ? Math.max(...allNodes.map(n => n.level)) : 0;
+            const activeNodes = allNodes.filter(n => n.activation > 0.1).length;
+            const totalVisits = allNodes.reduce((sum, n) => sum + n.visitCount, 0);
+            
+            ctx.fillText(`节点总数: ${allNodes.length}`, 20, canvas.height - 100);
+            ctx.fillText(`搜索深度: ${maxLevel}`, 20, canvas.height - 80);
+            ctx.fillText(`活跃节点: ${activeNodes}`, 20, canvas.height - 60);
+            ctx.fillText(`总访问次数: ${totalVisits}`, 20, canvas.height - 40);
+            ctx.fillText(`当前路径长度: ${mctsSearch.currentSearchPath.length}`, 20, canvas.height - 20);
+        }
+        
+        // 强制生长新节点（用于测试）
+        function forceGrowth() {
+            const leafNodes = allNodes.filter(node => 
+                node.children.length < node.maxChildren && 
+                node.level < 6
+            );
+            
+            if (leafNodes.length > 0) {
+                const randomLeaf = leafNodes[Math.floor(Math.random() * leafNodes.length)];
+                randomLeaf.growChild(time);
+            }
+        }
+        
+        // 鼠标点击强制生长
+        canvas.addEventListener('click', () => {
+            forceGrowth();
+            console.log("强制生长触发，当前节点数:", allNodes.length);
+        });
+        
+        // 键盘控制
+        document.addEventListener('keydown', (e) => {
+            if (e.key === ' ') { // 空格键强制生长
+                forceGrowth();
+            } else if (e.key === 'r') { // R键重新开始
+                allNodes = [];
+                init();
+            }
+        });
+        
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+        
+        init();
+        animate();
+        
+        // 定期强制生长（确保树会生长）
+        setInterval(() => {
+            if (allNodes.length < 50) { // 限制最大节点数
+                forceGrowth();
+            }
+        }, 2000);
+    </script>
+
+
+</body></html>

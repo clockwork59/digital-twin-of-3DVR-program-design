@@ -1,0 +1,470 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta name="x-poe-datastore-behavior" content="local_only"><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>球面蒙特卡洛搜索树动画</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #000;
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+        
+        #container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+            flex-direction: column;
+        }
+        
+        canvas {
+            border: 1px solid #333;
+            background: radial-gradient(circle, #001122 0%, #000000 100%);
+            cursor: grab;
+        }
+        
+        canvas:active {
+            cursor: grabbing;
+        }
+        
+        .controls {
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        button {
+            background: #2c5530;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        button:hover {
+            background: #3c7540;
+        }
+        
+        .info {
+            text-align: center;
+            margin: 10px 0;
+            font-size: 14px;
+            color: #aaa;
+        }
+    </style>
+<script src="https://puc.poecdn.net/authenticated_preview_page/syncedState.bd4eeeb8e8e02052ee92.js"></script></head>
+<body>
+    <div id="container">
+        <h1>球面蒙特卡洛搜索树可视化</h1>
+        <canvas id="mctsCanvas" width="800" height="600"></canvas>
+        
+        <div class="controls">
+            <button onclick="mctsViz.reset()">重置</button>
+            <button onclick="mctsViz.toggleAnimation()">暂停/播放</button>
+            <button onclick="mctsViz.speedUp()">加速</button>
+            <button onclick="mctsViz.slowDown()">减速</button>
+        </div>
+        
+        <div class="info">
+            <div id="nodeCount">节点数: 1</div>
+            <div>拖拽鼠标旋转视角 | 滚轮缩放</div>
+        </div>
+    </div>
+
+    <script>
+        class Vector3 {
+            constructor(x = 0, y = 0, z = 0) {
+                this.x = x;
+                this.y = y;
+                this.z = z;
+            }
+            
+            length() {
+                return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+            }
+            
+            normalize() {
+                const len = this.length();
+                if (len > 0) {
+                    this.x /= len;
+                    this.y /= len;
+                    this.z /= len;
+                }
+                return this;
+            }
+            
+            add(v) {
+                return new Vector3(this.x + v.x, this.y + v.y, this.z + v.z);
+            }
+            
+            subtract(v) {
+                return new Vector3(this.x - v.x, this.y - v.y, this.z - v.z);
+            }
+            
+            multiply(scalar) {
+                return new Vector3(this.x * scalar, this.y * scalar, this.z * scalar);
+            }
+        }
+
+        class MCTSNode {
+            constructor(position, parent = null) {
+                this.position = position; // Vector3
+                this.parent = parent;
+                this.children = [];
+                this.visits = 0;
+                this.value = 0;
+                this.depth = parent ? parent.depth + 1 : 0;
+                this.creationTime = Date.now();
+            }
+            
+            addChild(child) {
+                this.children.push(child);
+                child.parent = this;
+            }
+        }
+
+        class SphericalMCTSVisualizer {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
+                this.width = this.canvas.width;
+                this.height = this.canvas.height;
+                this.centerX = this.width / 2;
+                this.centerY = this.height / 2;
+                
+                // 相机参数
+                this.camera = {
+                    distance: 4,
+                    rotationX: 0.3,
+                    rotationY: 0,
+                    fov: 800
+                };
+                
+                // MCTS参数
+                this.radius = 1;
+                this.root = new MCTSNode(new Vector3(0, 0, this.radius));
+                this.nodes = [this.root];
+                this.maxNodes = 200;
+                
+                // 动画参数
+                this.isAnimating = true;
+                this.animationSpeed = 1;
+                this.lastTime = 0;
+                this.stepInterval = 500; // 毫秒
+                
+                // 交互参数
+                this.isDragging = false;
+                this.lastMouseX = 0;
+                this.lastMouseY = 0;
+                
+                this.setupEventListeners();
+                this.initializeTree();
+                this.animate();
+            }
+            
+            setupEventListeners() {
+                // 鼠标控制
+                this.canvas.addEventListener('mousedown', (e) => {
+                    this.isDragging = true;
+                    this.lastMouseX = e.clientX;
+                    this.lastMouseY = e.clientY;
+                });
+                
+                this.canvas.addEventListener('mousemove', (e) => {
+                    if (this.isDragging) {
+                        const deltaX = e.clientX - this.lastMouseX;
+                        const deltaY = e.clientY - this.lastMouseY;
+                        
+                        this.camera.rotationY += deltaX * 0.01;
+                        this.camera.rotationX += deltaY * 0.01;
+                        
+                        // 限制X轴旋转角度
+                        this.camera.rotationX = Math.max(-Math.PI/2, Math.min(Math.PI/2, this.camera.rotationX));
+                        
+                        this.lastMouseX = e.clientX;
+                        this.lastMouseY = e.clientY;
+                    }
+                });
+                
+                this.canvas.addEventListener('mouseup', () => {
+                    this.isDragging = false;
+                });
+                
+                // 滚轮缩放
+                this.canvas.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    this.camera.distance += e.deltaY * 0.01;
+                    this.camera.distance = Math.max(2, Math.min(8, this.camera.distance));
+                });
+            }
+            
+            initializeTree() {
+                // 初始扩展根节点
+                this.expandNode(this.root, 3);
+            }
+            
+            sphericalToCartesian(theta, phi, r = this.radius) {
+                const x = r * Math.sin(phi) * Math.cos(theta);
+                const y = r * Math.sin(phi) * Math.sin(theta);
+                const z = r * Math.cos(phi);
+                return new Vector3(x, y, z);
+            }
+            
+            generateChildPosition(parent, childIndex, totalChildren) {
+                const parentSphere = this.cartesianToSpherical(parent.position);
+                
+                // 增加径向距离
+                const newPhi = Math.min(parentSphere.phi + 0.4 + (Math.random() - 0.5) * 0.2, Math.PI);
+                
+                // 围绕父节点分布
+                let newTheta;
+                if (totalChildren === 1) {
+                    newTheta = parentSphere.theta + (Math.random() - 0.5) * 0.5;
+                } else {
+                    const angleStep = (Math.PI * 2) / totalChildren;
+                    newTheta = parentSphere.theta + angleStep * childIndex + (Math.random() - 0.5) * 0.3;
+                }
+                
+                return this.sphericalToCartesian(newTheta, newPhi);
+            }
+            
+            cartesianToSpherical(position) {
+                const r = position.length();
+                const theta = Math.atan2(position.y, position.x);
+                const phi = Math.acos(position.z / r);
+                return { r, theta, phi };
+            }
+            
+            expandNode(node, numChildren = null) {
+                if (this.nodes.length >= this.maxNodes) return;
+                
+                if (!numChildren) {
+                    numChildren = Math.floor(Math.random() * 3) + 1;
+                }
+                
+                for (let i = 0; i < numChildren && this.nodes.length < this.maxNodes; i++) {
+                    const childPos = this.generateChildPosition(node, i, numChildren);
+                    const child = new MCTSNode(childPos, node);
+                    node.addChild(child);
+                    this.nodes.push(child);
+                }
+            }
+            
+            simulateStep() {
+                if (this.nodes.length >= this.maxNodes) return;
+                
+                // 选择叶子节点
+                const leafNodes = this.nodes.filter(node => node.children.length === 0);
+                if (leafNodes.length > 0) {
+                    const selectedNode = leafNodes[Math.floor(Math.random() * leafNodes.length)];
+                    this.expandNode(selectedNode);
+                }
+            }
+            
+            project3D(point) {
+                // 应用相机旋转
+                let x = point.x;
+                let y = point.y;
+                let z = point.z;
+                
+                // Y轴旋转
+                const cosY = Math.cos(this.camera.rotationY);
+                const sinY = Math.sin(this.camera.rotationY);
+                const tempX = x * cosY - z * sinY;
+                z = x * sinY + z * cosY;
+                x = tempX;
+                
+                // X轴旋转
+                const cosX = Math.cos(this.camera.rotationX);
+                const sinX = Math.sin(this.camera.rotationX);
+                const tempY = y * cosX - z * sinX;
+                z = y * sinX + z * cosX;
+                y = tempY;
+                
+                // 透视投影
+                z += this.camera.distance;
+                if (z <= 0) z = 0.1;
+                
+                const screenX = this.centerX + (x * this.camera.fov) / z;
+                const screenY = this.centerY + (y * this.camera.fov) / z;
+                
+                return { x: screenX, y: screenY, z: z };
+            }
+            
+            drawSphere() {
+                this.ctx.strokeStyle = 'rgba(0, 255, 100, 0.1)';
+                this.ctx.lineWidth = 1;
+                
+                // 绘制经纬线
+                const segments = 16;
+                
+                // 经线
+                for (let i = 0; i < segments; i++) {
+                    const theta = (i / segments) * Math.PI * 2;
+                    this.ctx.beginPath();
+                    let firstPoint = true;
+                    
+                    for (let j = 0; j <= segments; j++) {
+                        const phi = (j / segments) * Math.PI;
+                        const point3D = this.sphericalToCartesian(theta, phi);
+                        const point2D = this.project3D(point3D);
+                        
+                        if (firstPoint) {
+                            this.ctx.moveTo(point2D.x, point2D.y);
+                            firstPoint = false;
+                        } else {
+                            this.ctx.lineTo(point2D.x, point2D.y);
+                        }
+                    }
+                    this.ctx.stroke();
+                }
+                
+                // 纬线
+                for (let i = 1; i < segments; i++) {
+                    const phi = (i / segments) * Math.PI;
+                    this.ctx.beginPath();
+                    let firstPoint = true;
+                    
+                    for (let j = 0; j <= segments * 2; j++) {
+                        const theta = (j / (segments * 2)) * Math.PI * 2;
+                        const point3D = this.sphericalToCartesian(theta, phi);
+                        const point2D = this.project3D(point3D);
+                        
+                        if (firstPoint) {
+                            this.ctx.moveTo(point2D.x, point2D.y);
+                            firstPoint = false;
+                        } else {
+                            this.ctx.lineTo(point2D.x, point2D.y);
+                        }
+                    }
+                    this.ctx.stroke();
+                }
+            }
+            
+            drawRadialLines() {
+                this.ctx.strokeStyle = 'rgba(255, 255, 0, 0.2)';
+                this.ctx.lineWidth = 0.5;
+                
+                const center = this.project3D(new Vector3(0, 0, 0));
+                
+                this.nodes.slice(1).forEach(node => {
+                    const nodePos = this.project3D(node.position);
+                    if (nodePos.z > 0) {
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(center.x, center.y);
+                        this.ctx.lineTo(nodePos.x, nodePos.y);
+                        this.ctx.stroke();
+                    }
+                });
+            }
+            
+            drawNodes() {
+                // 按Z坐标排序以正确处理深度
+                const projectedNodes = this.nodes.map(node => ({
+                    node: node,
+                    projected: this.project3D(node.position)
+                })).sort((a, b) => b.projected.z - a.projected.z);
+                
+                projectedNodes.forEach(({ node, projected }) => {
+                    if (projected.z <= 0) return;
+                    
+                    // 绘制连接线
+                    if (node.parent) {
+                        const parentPos = this.project3D(node.parent.position);
+                        if (parentPos.z > 0) {
+                            this.ctx.strokeStyle = 'rgba(0, 255, 100, 0.6)';
+                            this.ctx.lineWidth = 2;
+                            this.ctx.beginPath();
+                            this.ctx.moveTo(parentPos.x, parentPos.y);
+                            this.ctx.lineTo(projected.x, projected.y);
+                            this.ctx.stroke();
+                        }
+                    }
+                    
+                    // 绘制节点
+                    const age = Date.now() - node.creationTime;
+                    const maxAge = 10000; // 10秒
+                    const ageRatio = Math.min(age / maxAge, 1);
+                    
+                    const size = Math.max(15 - node.depth * 2, 5) * (1 / projected.z) * 100;
+                    const alpha = Math.max(0.3, 1 - ageRatio * 0.7);
+                    
+                    // 节点颜色基于深度
+                    const hue = (node.depth * 30) % 360;
+                    this.ctx.fillStyle = `hsla(${60 + hue}, 80%, 60%, ${alpha})`;
+                    
+                    this.ctx.beginPath();
+                    this.ctx.arc(projected.x, projected.y, size, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    // 节点边框
+                    this.ctx.strokeStyle = `hsla(${60 + hue}, 80%, 80%, ${alpha})`;
+                    this.ctx.lineWidth = 1;
+                    this.ctx.stroke();
+                });
+            }
+            
+            render() {
+                // 清空画布
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+                this.ctx.fillRect(0, 0, this.width, this.height);
+                
+                // 绘制球面网格
+                this.drawSphere();
+                
+                // 绘制放射线
+                this.drawRadialLines();
+                
+                // 绘制节点和连接
+                this.drawNodes();
+                
+                // 更新信息
+                document.getElementById('nodeCount').textContent = `节点数: ${this.nodes.length}`;
+            }
+            
+            animate(currentTime = 0) {
+                // 自动扩展树
+                if (this.isAnimating && currentTime - this.lastTime > this.stepInterval / this.animationSpeed) {
+                    this.simulateStep();
+                    this.lastTime = currentTime;
+                }
+                
+                // 自动旋转
+                if (this.isAnimating && !this.isDragging) {
+                    this.camera.rotationY += 0.005;
+                }
+                
+                this.render();
+                requestAnimationFrame((time) => this.animate(time));
+            }
+            
+            // 控制方法
+            reset() {
+                this.nodes = [this.root];
+                this.root.children = [];
+                this.initializeTree();
+            }
+            
+            toggleAnimation() {
+                this.isAnimating = !this.isAnimating;
+            }
+            
+            speedUp() {
+                this.animationSpeed = Math.min(this.animationSpeed * 1.5, 10);
+            }
+            
+            slowDown() {
+                this.animationSpeed = Math.max(this.animationSpeed / 1.5, 0.1);
+            }
+        }
+
+        // 初始化可视化
+        const mctsViz = new SphericalMCTSVisualizer('mctsCanvas');
+    </script>
+
+
+</body></html>
