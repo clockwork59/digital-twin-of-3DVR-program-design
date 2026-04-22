@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能眼镜平台概念设计 · 项目作品集</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary-dark: #0a0a0f;
+            --primary-blue: #0d1b2a;
+            --accent-gold: #d4a574;
+            --accent-cyan: #00d4ff;
+            --accent-purple: #a855f7;
+            --accent-pink: #ec4899;
+            --accent-green: #10b981;
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255,255,255,0.8);
+            --glass-bg: rgba(255,255,255,0.03);
+            --glass-border: rgba(255,255,255,0.1);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: var(--primary-dark);
+            color: var(--text-primary);
+            line-height: 1.8;
+        }
+
+        /* 导航 */
+        .nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            background: rgba(10,10,15,0.95);
+            backdrop-filter: blur(20px);
+            padding: 1rem 2rem;
+            z-index: 1000;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .nav-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-size: 1.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #d4a574, #f4e4c1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent-gold);
+        }
+
+        /* 封面 */
+        .cover {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #0d1b2a 0%, #1a1f3a 50%, #0d1b2a 100%);
+            position: relative;
+            padding: 6rem 2rem;
+            overflow: hidden;
+        }
+
+        .cover::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background:
+                radial-gradient(ellipse at 30% 20%, rgba(212,165,116,0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(0,212,255,0.1) 0%, transparent 50%);
+        }
+
+        .cover-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            max-width: 900px;
+        }
+
+        .cover-badge {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--accent-gold);
+            border-radius: 100px;
+            color: var(--accent-gold);
+            font-size: 0.85rem;
+            margin-bottom: 2rem;
+            letter-spacing: 0.1em;
+        }
+
+        .cover h1 {
+            font-size: clamp(2.5rem, 5vw, 4.5rem);
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #fff 0%, #d4a574 50%, #fff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+        }
+
+        .cover-subtitle {
+            font-size: clamp(1rem, 2vw, 1.4rem);
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+            font-weight: 300;
+        }
+
+        .cover-stats {
+            display: flex;
+            gap: 3rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* 章节通用样式 */
+        .section {
+            padding: 5rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-label {
+            display: inline-block;
+            font-size: 0.8rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+            padding: 0.3rem 1rem;
+            border-radius: 4px;
+        }
+
+        .section-label.perspective { color: var(--accent-cyan); border: 1px solid var(--accent-cyan); }
+        .section-label.visual { color: var(--accent-purple); border: 1px solid var(--accent-purple); }
+        .section-label.infospace { color: var(--accent-pink); border: 1px solid var(--accent-pink); }
+        .section-label.temporal { color: var(--accent-gold); border: 1px solid var(--accent-gold); }
+        .section-label.summary { color: var(--accent-green); border: 1px solid var(--accent-green); }
+
+        .section h2 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            margin-bottom: 1rem;
+        }
+
+        .section-desc {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* 图文卡片 */
+        .content-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .content-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .content-card h3.perspective-title { color: var(--accent-cyan); }
+        .content-card h3.visual-title { color: var(--accent-purple); }
+        .content-card h3.infospace-title { color: var(--accent-pink); }
+        .content-card h3.temporal-title { color: var(--accent-gold); }
+        .content-card h3.summary-title { color: var(--accent-green); }
+
+        .content-card p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            line-height: 1.9;
+        }
+
+        /* 图片网格 */
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .image-grid.single {
+            grid-template-columns: 1fr;
+            max-width: 900px;
+            margin: 2rem auto;
+        }
+
+        .image-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+        }
+
+        .image-item img {
+            width: 100%;
+            height: 280px;
+            object-fit: contain;
+            background: rgba(0,0,0,0.3);
+            transition: transform 0.3s;
+        }
+
+        .image-item img.portrait {
+            height: auto;
+            max-height: 400px;
+        }
+
+        .image-item img.landscape {
+            object-fit: cover;
+        }
+
+        .image-item:hover img {
+            transform: scale(1.05);
+        }
+
+        .image-caption {
+            padding: 1rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            background: rgba(0,0,0,0.5);
+            border-top: 1px solid var(--glass-border);
+        }
+
+        /* 大图展示 */
+        .hero-image {
+            width: 100%;
+            border-radius: 16px;
+            margin: 2rem 0;
+            border: 1px solid var(--glass-border);
+        }
+
+        /* 引用块 */
+        .quote-block {
+            background: linear-gradient(135deg, rgba(212,165,116,0.1), rgba(0,212,255,0.05));
+            border-left: 4px solid var(--accent-gold);
+            padding: 2rem;
+            margin: 2rem 0;
+            border-radius: 0 12px 12px 0;
+            font-style: italic;
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+        }
+
+        /* 时间线 */
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--accent-gold), var(--accent-cyan));
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 3rem;
+            padding-left: 2rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2rem;
+            top: 0.5rem;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            transform: translateX(-5px);
+        }
+
+        .timeline-item:nth-child(odd)::before { background: var(--accent-gold); }
+        .timeline-item:nth-child(even)::before { background: var(--accent-cyan); }
+
+        .timeline-item h4 {
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .timeline-item:nth-child(odd) h4 { color: var(--accent-gold); }
+        .timeline-item:nth-child(even) h4 { color: var(--accent-cyan); }
+
+        /* 特性列表 */
+        .feature-list {
+            list-style: none;
+            margin: 1.5rem 0;
+        }
+
+        .feature-list li {
+            padding: 0.8rem 0;
+            padding-left: 2rem;
+            position: relative;
+            color: var(--text-secondary);
+        }
+
+        .feature-list li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--accent-gold);
+        }
+
+        /* 双栏布局 */
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: start;
+        }
+
+        @media (max-width: 768px) {
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .cover-stats {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+        }
+
+        /* 页脚 */
+        .footer {
+            text-align: center;
+            padding: 4rem 2rem;
+            border-top: 1px solid var(--glass-border);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* 高亮文字 */
+        .highlight {
+            color: var(--accent-gold);
+            font-weight: 600;
+        }
+
+        /* 场景卡片 */
+        .scene-card {
+            background: linear-gradient(135deg, rgba(0,212,255,0.05), rgba(168,85,247,0.05));
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .scene-card h4 {
+            margin-bottom: 1rem;
+        }
+
+        .scene-card h4 { color: var(--accent-cyan); }
+
+        /* 分隔线 */
+        .category-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--glass-border), transparent);
+            margin: 4rem 0;
+        }
+
+        /* 主题色背景 */
+        .bg-perspective { background: linear-gradient(180deg, transparent 0%, rgba(0,212,255,0.03) 50%, transparent 100%); }
+        .bg-visual { background: linear-gradient(180deg, transparent 0%, rgba(168,85,247,0.03) 50%, transparent 100%); }
+        .bg-infospace { background: linear-gradient(180deg, transparent 0%, rgba(236,72,153,0.03) 50%, transparent 100%); }
+        .bg-temporal { background: linear-gradient(180deg, transparent 0%, rgba(212,165,116,0.05) 50%, transparent 100%); }
+        .bg-summary { background: linear-gradient(180deg, transparent 0%, rgba(16,185,129,0.03) 50%, transparent 100%); }
+
+        /* 目录导航 */
+        .toc {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .toc h3 {
+            margin-bottom: 1.5rem;
+            color: var(--accent-gold);
+        }
+
+        .toc-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            list-style: none;
+        }
+
+        .toc-list a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s;
+            display: block;
+        }
+
+        .toc-list a:hover {
+            background: var(--glass-bg);
+            color: var(--accent-gold);
+        }
+
+        /* 卡片网格 */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+
+        .card-grid .content-card {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航 -->
+    <nav class="nav">
+        <div class="nav-content">
+            <div class="nav-logo">项目成果集</div>
+            <ul class="nav-links">
+                <li><a href="#perspective">视角体系</a></li>
+                <li><a href="#visual">视觉体验</a></li>
+                <li><a href="#infospace">信息空间</a></li>
+                <li><a href="#temporal">时空推演</a></li>
+                <li><a href="#summary">总结归纳</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- 封面 -->
+    <section class="cover">
+        <div class="cover-content">
+            <div class="cover-badge">项目作品集 · 2025</div>
+            <h1>智能眼镜平台<br>概念设计</h1>
+            <p class="cover-subtitle">从平面到空间的认知革命 · 21个核心概念构建的未来蓝图</p>
+            <div class="cover-stats">
+                <div class="stat-item">
+                    <div class="stat-number">21</div>
+                    <div class="stat-label">核心概念</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">5</div>
+                    <div class="stat-label">主题板块</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">100+</div>
+                    <div class="stat-label">视觉素材</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 目录导航 -->
+    <section class="section">
+        <div class="toc">
+            <h3>内容导航</h3>
+            <ul class="toc-list">
+                <li><a href="#perspective">👁️ 视角体系（3）</a></li>
+                <li><a href="#visual">🎨 视觉体验（9）</a></li>
+                <li><a href="#infospace">🌐 信息空间（5）</a></li>
+                <li><a href="#temporal">⏰ 时空推演（3）</a></li>
+                <li><a href="#summary">📋 总结归纳（2）</a></li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- 视角体系 -->
+    <section class="section bg-perspective" id="perspective">
+        <div class="section-header">
+            <span class="section-label perspective">Chapter 01</span>
+            <h2>视角体系：沉浸的三维认知</h2>
+            <p class="section-desc">从第三人称到第一人称，构建完整的空间感知谱系</p>
+        </div>
+
+        <!-- 第一人称视角 -->
+        <div class="content-card">
+            <h3 class="perspective-title">第一人称视角 / 主体视角</h3>
+            <p>当我们进入特定场景/特定角色的信息球中，我们在最宏观的角度看到的，大致应该会是这样的场景。我们不但可以看到当前世界观所包含的事情（脚下那个平面），以及与当前世界关联的其他"小宇宙"。</p>
+
+            <div class="image-grid">
+                <div class="image-item">
+                    <img src="./markdown资料/第一人称视角!主体视角-assets/Pasted 2025-09-08-15-40-08.jpeg" alt="信息球场景">
+                    <div class="image-caption">信息球内部视角 - 脚下平面与关联小宇宙</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/第一人称视角!主体视角-assets/Pasted 2025-09-08-12-16-00.jpeg" alt="小宇宙关联">
+                    <div class="image-caption">多重宇宙的关联视图</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/第一人称视角!主体视角-assets/Pasted 2025-09-08-12-16-04.jpeg" alt="独立小球对象">
+                    <div class="image-caption">独立小球的对象构成</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/第一人称视角!主体视角-assets/image.png" alt="多重宇宙视图">
+                    <div class="image-caption">多重宇宙的另外一个视图模式</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/第一人称视角!主体视角-assets/image 1.png" alt="典型第一人称视觉">
+                    <div class="image-caption">典型的主体第一人称视觉</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/第一人称视角!主体视角-assets/Pasted 2025-09-08-15-40-40.jpeg" alt="第一人称视觉">
+                    <div class="image-caption">置身信息空间的第一人称体验</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第三人称视角 -->
+        <div class="content-card">
+            <h3 class="perspective-title">第三人称视角 / 鸟瞰视角</h3>
+            <p>这张图表达的是可能性的多个层级，最里面的是当前你的所有可能性（你在中心点，你是教师。你的世界充满了学校、班级、考试、师生等等要素）。某些可能性会构成更完整的子系统——可以理解为如果你做了艺术家，那么艺术家的世界就是一个新的"小球"，数据会在那个小球里独立发展出自己的人生。</p>
+
+            <div class="image-grid">
+                <div class="image-item">
+                    <img src="./markdown资料/第三人称视角!鸟瞰视角-assets/image.png" alt="可能性层级">
+                    <div class="image-caption">可能性的多个层级结构</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/第三人称视角!鸟瞰视角-assets/Pasted 2025-09-08-11-38-12.jpeg" alt="独立小球构成">
+                    <div class="image-caption">独立小球的对象构成（音乐厅、练琴房、油画等）</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/第三人称视角!鸟瞰视角-assets/image 1.png" alt="菜花球结构">
+                    <div class="image-caption">菜花球结构 - 与上图表达含义一致</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/第三人称视角!鸟瞰视角-assets/Pasted 2025-09-06-13-02-27.jpeg" alt="普罗米修斯宇宙导航">
+                    <div class="image-caption">电影《普罗米修斯》- 工程师启动宇宙导航（宏观第三者视角）</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/第三人称视角!鸟瞰视角-assets/Pasted 2025-09-08-15-40-49.gif" alt="3D感知动画">
+                    <div class="image-caption">3D洞穴感知 - 飞船扫描小蜜蜂视角</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/第三人称视角!鸟瞰视角-assets/Pasted 2025-09-06-13-02-24.jpeg" alt="3D洞穴">
+                    <div class="image-caption">经典3D展示第三者视角</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/第三人称视角!鸟瞰视角-assets/image 2.png" alt="本位视角">
+                    <div class="image-caption">本位/当前世界的第三者视角</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/第三人称视角!鸟瞰视角-assets/image 3.png" alt="3D视图">
+                    <div class="image-caption">3D空间感知视图</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第一人称沉浸式视觉 -->
+        <div class="content-card">
+            <h3 class="perspective-title">第一人称 - 沉浸式视觉</h3>
+            <p>视觉主体位于视觉核心，被信息球（多层级）包裹。人在行动中信息空间的变换/扭曲/加速，多个视图的"红色"代表了特定事件在全息信息空间中的不同映射与表达。</p>
+
+            <div class="image-grid">
+                <div class="image-item">
+                    <img src="./markdown资料/第一人称-沉浸式视觉-assets/image.png" alt="视觉核心">
+                    <div class="image-caption">视觉主体位于视觉核心</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/第一人称-沉浸式视觉-assets/Pasted 2025-09-06-13-00-54.jpeg" alt="信息球包裹">
+                    <div class="image-caption">被信息球（多层级）包裹的少女</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/第一人称-沉浸式视觉-assets/Pasted 2025-09-06-13-02-58.jpeg" alt="信息空间变换">
+                    <div class="image-caption">人在行动中信息空间的变换/扭曲/加速</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/第一人称-沉浸式视觉-assets/Pasted 2025-09-06-13-02-06.jpeg" alt="事件映射">
+                    <div class="image-caption">多个视图的"红色"代表事件的不同映射</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 视觉体验 -->
+    <section class="section bg-visual" id="visual">
+        <div class="section-header">
+            <span class="section-label visual">Chapter 02</span>
+            <h2>视觉体验：从平面到球幕</h2>
+            <p class="section-desc">探索视觉界面的进化之路，从二维平面到三维球幕的沉浸体验</p>
+        </div>
+
+        <!-- 基于视觉空间体验 -->
+        <div class="content-card">
+            <h3 class="visual-title">基于视觉空间体验</h3>
+            <p>空间视觉是一套完整的理论体系和方法，空间视觉计算可以让人在不同的视觉体验模式中获得一致的（空间感）体验。下图展示了三种递进式的视觉体验模式：第一种是我们常见的平面视觉，第二种是环绕视觉（比如目前已经出现的电脑"带鱼"屏幕），第三种就是球幕影院或者迪士尼7D电影那种视觉体验。</p>
+
+            <div class="image-grid">
+                <div class="image-item">
+                    <img class="landscape" src="./markdown资料/基于视觉空间体验-assets/image.png" alt="空间视觉理论">
+                    <div class="image-caption">空间视觉理论体系</div>
+                </div>
+                <div class="image-item">
+                    <img class="landscape" src="./markdown资料/基于视觉空间体验-assets/image 1.png" alt="三种视觉模式">
+                    <div class="image-caption">三种递进式视觉体验模式</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 环绕视觉 -->
+        <div class="content-card">
+            <h3 class="visual-title">环绕视觉</h3>
+            <p>环状视觉模式将视觉曲面扩展成环状，它充分利用人用手做交互时，可以让视觉内容在视觉环上移动，以便完成多维度信息的交互式传达和行为互动。这个是多个信息环构成的更多模式，它已经开始接近球幕了。</p>
+
+            <div class="image-grid">
+                <div class="image-item">
+                    <img src="./markdown资料/环绕视觉-assets/image.png" alt="环绕视觉">
+                    <div class="image-caption">环状视觉模式</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/环绕视觉-assets/image 1.png" alt="信息环组合">
+                    <div class="image-caption">多个信息环构成的信息模式</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 多重环绕视觉 -->
+        <div class="content-card">
+            <h3 class="visual-title">多重环绕视觉</h3>
+            <p>除了通过多个上下排列的视觉环之外，还有一个方法将视觉环做成内外嵌套的模式，让信息的组织更加立体。不同圈层的信息环可以从距离信息接收者的远近方面组织信息和数据的时效性、紧迫性、重要性等等。</p>
+
+            <div class="image-grid">
+                <div class="image-item">
+                    <img src="./markdown资料/多重环绕视觉-assets/image.png" alt="多重环绕">
+                    <div class="image-caption">内外嵌套的多重环绕视觉</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/多重环绕视觉-assets/image 1.png" alt="信息圈层">
+                    <div class="image-caption">不同圈层组织信息的时效性与重要性</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 视觉曲面 -->
+        <div class="content-card">
+            <h3 class="visual-title">视觉曲面</h3>
+            <p>包裹人的自然视角的显示尺度。这样的显示模式能够利用人的最大信息接受幅宽，进而将更多信息同时间投射给信息接收者。</p>
+
+            <div class="image-grid">
+                <div class="image-item">
+                    <img src="./markdown资料/视觉曲面-assets/Pasted 2025-09-06-18-23-25.jpeg" alt="视觉曲面">
+                    <div class="image-caption">包裹人的自然视角的显示尺度</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/视觉曲面-assets/image.png" alt="曲面显示">
+                    <div class="image-caption">曲面显示模式</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/视觉曲面-assets/Pasted 2025-09-06-10-51-14.jpeg" alt="视觉曲面示例">
+                    <div class="image-caption">视觉曲面应用示例</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 双曲面屏幕 -->
+        <div class="content-card">
+            <h3 class="visual-title">双曲面屏幕 / 视觉</h3>
+            <p>这是硬件双曲面屏幕，你可以将它看作是对视觉环的再一次立体化改进，这种屏幕会让人有更多的沉浸感。本质上，它是球幕的一个小部分，或者叫做局部球幕。</p>
+
+            <div class="image-grid">
+                <div class="image-item">
+                    <img src="./markdown资料/双曲面屏幕!视觉-assets/image.png" alt="双曲面">
+                    <div class="image-caption">双曲面屏幕 - 局部球幕</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/双曲面屏幕!视觉-assets/image 1.png" alt="双曲面效果">
+                    <div class="image-caption">双曲面视觉效果</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 球面球幕视觉 -->
+        <div class="content-card">
+            <h3 class="visual-title">球面球幕视觉 / 7D</h3>
+            <p>球幕和7D是最好的视觉体验模式，以下全部是基于硬件设施的视觉体验。但我们需要将这种模式转变为虚拟视觉模式，它不受硬件条件限制的情况下会发挥更大的应用潜力和更好的视觉体验。</p>
+
+            <div class="image-grid">
+                <div class="image-item">
+                    <img src="./markdown资料/球面球幕视觉!7D-assets/Pasted 2025-09-06-14-22-30.jpeg" alt="球幕视觉">
+                    <div class="image-caption">球面球幕视觉体验</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/球面球幕视觉!7D-assets/image.png" alt="7D影院">
+                    <div class="image-caption">7D影院模式</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/球面球幕视觉!7D-assets/image 1.png" alt="球幕应用">
+                    <div class="image-caption">球幕应用场景</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 多重球幕视觉 -->
+        <div class="content-card">
+            <h3 class="visual-title">多重球幕视觉</h3>
+            <p>多重球幕视觉呈现能带来更加沉浸的视觉体验，尤其是在多重时空推演模式中，它能让信息接受与交互操作变得更接近人在真实世界的体验。</p>
+
+            <div class="image-grid">
+                <div class="image-item">
+                    <img src="./markdown资料/多重球幕视觉-assets/image.png" alt="多重球幕概念">
+                    <div class="image-caption">多重球幕概念图</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/多重球幕视觉-assets/Pasted 2025-09-06-13-42-22.jpeg" alt="多重曲面渲染">
+                    <div class="image-caption">电影《致命玩家》的多重曲面渲染图</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/多重球幕视觉-assets/Pasted 2025-09-06-13-33-28.jpeg" alt="游戏机概念">
+                    <div class="image-caption">球面多重视图游戏机概念图</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/多重球幕视觉-assets/Pasted 2025-09-06-13-32-39.jpeg" alt="球面多重视图">
+                    <div class="image-caption">球面多重视图概念图</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/多重球幕视觉-assets/Pasted 2025-09-06-20-44-56.jpeg" alt="多重球幕">
+                    <div class="image-caption">多重球幕沉浸体验</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 虚拟视觉 -->
+        <div class="content-card">
+            <h3 class="visual-title">虚拟视觉 - 非平面视觉</h3>
+            <p>虚拟视觉的特点就是不要实体的物理的屏幕，也就意味着为了视觉传达，可以无限制的产生很多"屏幕"。但是这些屏幕不应该是平面的，具有明显"空间极限"的视觉体验。</p>
+
+            <div class="image-grid">
+                <div class="image-item">
+                    <img src="./markdown资料/虚拟视觉-非平面视觉-assets/Pasted 2025-09-06-13-33-18.jpeg" alt="虚拟视觉">
+                    <div class="image-caption">虚拟视觉 - 无物理屏幕的信息空间</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/虚拟视觉-非平面视觉-assets/image.png" alt="错误设想">
+                    <div class="image-caption">错误的虚拟视图设想（平面局限）</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/虚拟视觉-非平面视觉-assets/Pasted 2025-09-06-13-03-28.jpeg" alt="恰当展示">
+                    <div class="image-caption">恰当的视觉展示模式 - 曲面化</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/虚拟视觉-非平面视觉-assets/Pasted 2025-09-06-14-22-26.jpeg" alt="虚拟应用">
+                    <div class="image-caption">虚拟视觉应用示例</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 她应该看到什么 -->
+        <div class="content-card">
+            <h3 class="visual-title">她应该看到什么？</h3>
+            <p>探讨智能眼镜如何根据用户角色和场景智能呈现信息。</p>
+
+            <div class="image-grid single">
+                <div class="image-item">
+                    <img class="portrait" src="./markdown资料/她应该看到什么？-assets/Pasted 2025-09-06-13-02-01.jpeg" alt="智能呈现">
+                    <div class="image-caption">智能信息呈现 - 根据角色与场景定制</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 信息空间 -->
+    <section class="section bg-infospace" id="infospace">
+        <div class="section-header">
+            <span class="section-label infospace">Chapter 03</span>
+            <h2>信息空间：空间化的认知疆域</h2>
+            <p class="section-desc">一旦进入"虚幻空间"，信息立即包围你，如同奇异博士的空间跳转</p>
+        </div>
+
+        <!-- 信息空间 -->
+        <div class="content-card">
+            <h3 class="infospace-title">信息空间</h3>
+            <p>一旦你进入了特定的"虚幻空间"，就好比奇异博士自己跳转到了一个新空间。那么这个空间的信息就会立即"包围"你，它的信息组合模式仅仅受这个信息空间的逻辑支配。在具像化一些，就是我们可以将这些空间看作是<strong>一个个可以"跳转/传送/穿越"的空间盒子</strong>。</p>
+
+            <div class="image-grid">
+                <div class="image-item">
+                    <img src="./markdown资料/信息空间-assets/Pasted 2025-09-06-13-01-27.jpeg" alt="空间入口">
+                    <div class="image-caption">空间入口视图 - 顶部是入口，连线代表关联</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/信息空间-assets/Pasted 2025-09-06-13-32-50.jpeg" alt="子空间维度">
+                    <div class="image-caption">子空间维度团簇</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/信息空间-assets/Pasted 2025-09-08-15-46-57.jpeg" alt="小宇宙">
+                    <div class="image-caption">给定的小宇宙及其世界观</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/信息空间-assets/image.png" alt="空间盒子">
+                    <div class="image-caption">空间盒子概念</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/信息空间-assets/image 1.png" alt="空间盒子1">
+                    <div class="image-caption">空间盒子应用</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/信息空间-assets/image 2.png" alt="空间盒子2">
+                    <div class="image-caption">空间盒子示例2</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/信息空间-assets/image 3.png" alt="空间盒子3">
+                    <div class="image-caption">空间盒子示例3</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 信息空间中的单一视图 -->
+        <div class="content-card">
+            <h3 class="infospace-title">信息空间中的单一视图</h3>
+            <p>单一视图中的"总图"，它更像一个入口，可以给你选择如何进入到单一的视图中去。3D虚拟-实物交互：画面中工程师在虚拟空间中对发动机的虚拟实体进行工程操作。这个类型的界面是沉浸式的，是手眼协同的第一人称视角。</p>
+
+            <div class="image-grid">
+                <div class="image-item">
+                    <img src="./markdown资料/信息空间中的单一视图-assets/Pasted 2025-09-06-13-32-37.jpeg" alt="总图">
+                    <div class="image-caption">单一视图的"总图"入口</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/信息空间中的单一视图-assets/Pasted 2025-09-06-13-02-12.jpeg" alt="视图1">
+                    <div class="image-caption">信息空间视图示例1</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/信息空间中的单一视图-assets/Pasted 2025-09-06-13-02-22.jpeg" alt="视图2">
+                    <div class="image-caption">信息空间视图示例2</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/信息空间中的单一视图-assets/image.png" alt="3D交互">
+                    <div class="image-caption">3D虚拟-实物交互（手眼协同第一人称）</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/信息空间中的单一视图-assets/Pasted 2025-09-06-14-22-27.jpeg" alt="漫游">
+                    <div class="image-caption">沉浸式漫游场景</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 面向实体的信息"环" -->
+        <div class="content-card">
+            <h3 class="infospace-title">面向实体的信息"环"</h3>
+            <p>将信息环绕实体进行组织，形成以实体为中心的多层信息环结构，实现信息的立体化呈现与交互。</p>
+
+            <div class="image-grid">
+                <div class="image-item">
+                    <img src="./markdown资料/面向实体的信息环-assets/Pasted 2025-09-06-14-22-22.jpeg" alt="信息环">
+                    <div class="image-caption">面向实体的信息环结构</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/面向实体的信息环-assets/image.png" alt="信息环总览">
+                    <div class="image-caption">信息环总览</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 宇宙级别的关联 -->
+        <div class="content-card">
+            <h3 class="infospace-title">宇宙级别的关联</h3>
+            <p>在之前的《自动驾驶-星空图》里面，我们剖析了"各种"与主题事物关联的"小宇宙"。这里我们可以看到各种描绘这些关联的图片。每个"小宇宙"都是关联关系的具体呈现。</p>
+
+            <div class="image-grid">
+                <div class="image-item">
+                    <img src="./markdown资料/宇宙级别的关联-assets/image.png" alt="宇宙关联">
+                    <div class="image-caption">宇宙级别的关联视图</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/宇宙级别的关联-assets/image 1.png" alt="小宇宙1">
+                    <div class="image-caption">小宇宙关联示例1</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/宇宙级别的关联-assets/image 2.png" alt="小宇宙2">
+                    <div class="image-caption">小宇宙关联示例2</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/宇宙级别的关联-assets/image 3.png" alt="小宇宙3">
+                    <div class="image-caption">小宇宙关联示例3</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/宇宙级别的关联-assets/Pasted 2025-09-08-12-04-13.jpeg" alt="宇宙网络">
+                    <div class="image-caption">宇宙级别的关联网络</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/宇宙级别的关联-assets/image 4.png" alt="小宇宙4">
+                    <div class="image-caption">小宇宙关联示例4</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 在3D视觉空间的信息交互 -->
+        <div class="content-card">
+            <h3 class="infospace-title">在3D视觉空间的信息交互</h3>
+            <p><strong>飞行模式-漫游信息空间：</strong>从空间叙事的角度，从一个空间到另一个空间。在现实物理世界中是靠"走"的，但是在虚拟世界就可以靠"飞行"，但是飞行的路径还是要根据需要提前规划，比如因果推理、时空推演和事件回朔。</p>
+
+            <p><strong>传送模式：</strong>不再是平面屏幕的切换而是视觉空间传送。通过"圆盘"操作和开启不同的空间通道。</p>
+
+            <div class="image-grid">
+                <div class="image-item">
+                    <img src="./markdown资料/在3D视觉空间的信息交互-assets/Pasted 2025-09-06-13-01-20.jpeg" alt="飞行1">
+                    <div class="image-caption">电影《星际旅行》中的5D空间漫游</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/在3D视觉空间的信息交互-assets/Pasted 2025-09-06-13-01-25.jpeg" alt="飞行2">
+                    <div class="image-caption">空间飞行模式</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/在3D视觉空间的信息交互-assets/image.png" alt="奇异博士传送门">
+                    <div class="image-caption">电影《奇异博士》的传送门</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/在3D视觉空间的信息交互-assets/image 1.png" alt="圆盘操作">
+                    <div class="image-caption">漫画中的"圆盘"式空间操作</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/在3D视觉空间的信息交互-assets/Pasted 2025-09-06-13-01-33.jpeg" alt="圆盘">
+                    <div class="image-caption">圆盘操作界面</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/在3D视觉空间的信息交互-assets/Pasted 2025-09-06-13-33-10.jpeg" alt="异形传送">
+                    <div class="image-caption">电影《异形》的球形空间操作台</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/在3D视觉空间的信息交互-assets/image 2.png" alt="交互1">
+                    <div class="image-caption">手部弧形操作界面</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/在3D视觉空间的信息交互-assets/image 3.png" alt="交互2">
+                    <div class="image-caption">沉浸式交互场景</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/在3D视觉空间的信息交互-assets/Pasted 2025-09-06-13-33-04.jpeg" alt="交互3">
+                    <div class="image-caption">3D空间交互操作</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/在3D视觉空间的信息交互-assets/Pasted 2025-09-06-20-45-01.jpeg" alt="交互4">
+                    <div class="image-caption">沉浸式信息操作</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/在3D视觉空间的信息交互-assets/Pasted 2025-09-06-20-45-06.jpeg" alt="交互5">
+                    <div class="image-caption">虚拟空间交互</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/在3D视觉空间的信息交互-assets/Pasted 2025-09-06-20-45-03.jpeg" alt="交互6">
+                    <div class="image-caption">信息空间中的行为互动</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 时空推演 -->
+    <section class="section bg-temporal" id="temporal">
+        <div class="section-header">
+            <span class="section-label temporal">Chapter 04</span>
+            <h2>时空推演：可能性之光</h2>
+            <p class="section-desc">从AlphaGo到时空锥，构建未来的多维度可视化</p>
+        </div>
+
+        <!-- 可能性演化的可视化 -->
+        <div class="content-card">
+            <h3 class="temporal-title">可能性演化的可视化</h3>
+            <p><strong>多原因路径演化（平面）：</strong>传统的方式是用平面的树状图来展示可能性的演化。</p>
+            <p><strong>菜花球：</strong>菜花模样的，非常类似于时空路径推演装置，只不过菜花球用了更加立体的形式来表达。这种表达很符合沉浸式视觉体验的表达逻辑。这是一个使用星空图来描绘自动驾驶相关信息要素、知识要素和物理零件要素的信息图。</p>
+
+            <div class="image-grid">
+                <div class="image-item">
+                    <img src="./markdown资料/可能性演化的可视化-assets/Pasted 2025-09-06-13-32-43.jpeg" alt="平面路径">
+                    <div class="image-caption">多原因路径演化（平面）</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/可能性演化的可视化-assets/Pasted 2025-09-06-13-32-46.jpeg" alt="球面演化">
+                    <div class="image-caption">球面可能性分布</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/可能性演化的可视化-assets/Pasted 2025-09-06-13-32-52.jpeg" alt="菜花球">
+                    <div class="image-caption">菜花球 - 立体化的可能性表达</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/可能性演化的可视化-assets/image.png" alt="星空图">
+                    <div class="image-caption">星空图 - 智能生成/本体体系/计算单元等小宇宙</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/可能性演化的可视化-assets/Pasted 2025-09-06-13-32-56.jpeg" alt="宇宙地球">
+                    <div class="image-caption">宇宙-地球时空推演</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 信息的演化与时空推理 -->
+        <div class="content-card">
+            <h3 class="temporal-title">信息的演化与时空推理</h3>
+            <p><strong>过去的路径vs未来的路径：</strong>中间的竖线代表的是当前时刻，竖线左侧代表的是过去，从出生开始你可能的机会（灰色路径），以及你实际的人生轨迹（左侧唯一的绿色路径）；竖线右侧代表的是未来，所有的路径都是绿色的，都有可能。</p>
+            <p><strong>时空锥：</strong>这个图片将可能性用"时空锥"来表示。在不同的锥形切面上（锥体上的浅灰色圆环）代表了时空中的某一个时刻的空间，在这个空间上星星代表了那个时刻你的状态和信息。</p>
+
+            <div class="image-grid">
+                <div class="image-item">
+                    <img src="./markdown资料/信息的演化与时空推理-assets/Pasted 2025-09-06-13-32-23.jpg" alt="过去未来路径">
+                    <div class="image-caption">过去路径（灰色）vs 未来路径（绿色）</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/信息的演化与时空推理-assets/Pasted 2025-09-06-13-32-29.jpeg" alt="时空锥">
+                    <div class="image-caption">时空锥 - 可能性在时空中的演化</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/信息的演化与时空推理-assets/Pasted 2025-09-06-13-00-27.png" alt="AlphaGo">
+                    <div class="image-caption">AlphaGo围棋推演算法可视化</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/信息的演化与时空推理-assets/Pasted 2025-09-06-18-50-23.jpeg" alt="推演">
+                    <div class="image-caption">可能性路径推演</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/信息的演化与时空推理-assets/Pasted 2025-09-06-13-00-36.jpeg" alt="艺术装置">
+                    <div class="image-caption">时空路径推演艺术装置</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 时空推演与飞行 -->
+        <div class="content-card">
+            <h3 class="temporal-title">时空推演与飞行</h3>
+            <p>从影视剧中的犯罪推理板开始，侦探们通过证据可视化来推理案情。如果一个港口，或者一个特定的技术领域，它的场景和可能的因果关系体系是可以被组织起来的，运用时空推演，就可以将不同的事件用时间关系串联成一个事件主导的链条。</p>
+
+            <div class="image-grid">
+                <div class="image-item">
+                    <img src="./markdown资料/时空推演与飞行-assets/image.png" alt="推理板">
+                    <div class="image-caption">影视剧中的犯罪推理板</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/时空推演与飞行-assets/image 1.png" alt="推理板3D">
+                    <div class="image-caption">3D化的推理板装置艺术</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/时空推演与飞行-assets/image 2.png" alt="因果链条">
+                    <div class="image-caption">因果链条/时间关系组织</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/时空推演与飞行-assets/Pasted 2025-09-09-09-59-34.jpeg" alt="港口推演">
+                    <div class="image-caption">港口场景推演</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/时空推演与飞行-assets/Pasted 2025-09-09-09-59-26.jpeg" alt="事件链条">
+                    <div class="image-caption">雨滴落地的"事件"链条</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/时空推演与飞行-assets/Pasted 2025-09-09-09-59-44.jpeg" alt="时空隧道">
+                    <div class="image-caption">组织好的时空隧道</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/时空推演与飞行-assets/image 3.png" alt="时空隧道视图">
+                    <div class="image-caption">时空隧道视图</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/时空推演与飞行-assets/image 4.png" alt="问题解决">
+                    <div class="image-caption">侦探在时空中发现问题并解决</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/时空推演与飞行-assets/image 5.png" alt="主观视角">
+                    <div class="image-caption">主观视角 - 站在时光隧道中</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/时空推演与飞行-assets/Pasted 2025-09-09-10-00-16.jpeg" alt="隧道悬挂牌">
+                    <div class="image-caption">空间与事件悬挂在隧道周围</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/时空推演与飞行-assets/image 6.png" alt="事件空间">
+                    <div class="image-caption">进入特定事件时空对应的信息空间</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/时空推演与飞行-assets/Pasted 2025-09-06-13-02-37.jpeg" alt="飞行">
+                    <div class="image-caption">虚拟"飞行"在信息空间中穿梭</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 总结归纳 -->
+    <section class="section bg-summary" id="summary">
+        <div class="section-header">
+            <span class="section-label summary">Chapter 05</span>
+            <h2>总结归纳：认知的进化</h2>
+            <p class="section-desc">从使用到居住，一次根本性的认知革命</p>
+        </div>
+
+        <!-- 总结 -->
+        <div class="content-card">
+            <h3 class="summary-title">核心概念总结</h3>
+            <p><strong>1. 多层虚拟屏幕：</strong>通过虚拟现实技术呈现多层信息屏幕，实现信息的立体化组织。</p>
+            <p><strong>2. 基于事件的时空推演：</strong>这些屏幕的内容是基于事件的时空推演后自动形成的，每个点代表一个屏幕/信息节点。</p>
+            <p><strong>3. 虚拟"飞行"穿梭：</strong>通过虚拟"飞行"在不同的3D视觉空间中穿梭，并完成事件追踪/因果推理/业务判断/行动决策。</p>
+
+            <div class="image-grid">
+                <div class="image-item">
+                    <img src="./markdown资料/总结-assets/image.png" alt="多层虚拟屏幕">
+                    <div class="image-caption">多层虚拟屏幕 - 信息立体化组织</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/总结-assets/Pasted 2025-09-06-13-32-52.jpeg" alt="时空推演">
+                    <div class="image-caption">每个点代表一个屏幕 - 时空推演网络</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/总结-assets/Pasted 2025-09-06-13-33-04.jpeg" alt="虚拟飞行">
+                    <div class="image-caption">虚拟"飞行"穿梭 - 事件追踪与决策</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 空间叙事与表达 -->
+        <div class="content-card">
+            <h3 class="summary-title">空间叙事与表达</h3>
+            <p>空间叙事，是说在一个固有的空间中穿行，不同的路径会给人带来不同的体验。在一个旅游城市中，采用不同的景点关联路径，得到的体验和认知是不同的。同时在一个特定的景点上，旅客能够获取的信息、拍摄的图片是趋同的。</p>
+            <p>也就是说，如果你知道所处空间以及这个叙事空间与其他空间之间的关联。那么就有可能<strong>将这些几乎固化的信息空间、空间路径、信息关联按照信息空间的组织方法集成在一起</strong>。</p>
+
+            <div class="image-grid">
+                <div class="image-item">
+                    <img src="./markdown资料/空间叙事与表达-assets/Pasted 2025-09-06-19-02-52.jpeg" alt="空间叙事">
+                    <div class="image-caption">城市空间叙事 - 不同路径带来不同体验</div>
+                </div>
+                <div class="image-item">
+                    <img src="./markdown资料/空间叙事与表达-assets/Pasted 2025-09-06-19-06-04.jpeg" alt="空间解构">
+                    <div class="image-caption">城市空间的解构 - 信息组合模式与传递路径</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 核心理念 -->
+        <div class="content-card" style="text-align: center; background: linear-gradient(135deg, rgba(212,165,116,0.1), rgba(0,212,255,0.05));">
+            <h3 style="border: none; color: var(--accent-gold); margin-bottom: 2rem;">认知的进化：从使用到居住</h3>
+            <div class="quote-block" style="text-align: center; font-size: 1.3rem;">
+                "过去：我们使用计算机<br>
+                现在：我们与计算机交互<br>
+                未来：我们居住在信息中"
+            </div>
+            <p style="margin-top: 2rem; font-size: 1.1rem;">空间计算将让我们能够直接居住在信息和想象中。</p>
+            <p style="margin-top: 1.5rem; color: var(--accent-gold); font-size: 1.3rem;">欢迎来到这个新世界。</p>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <p>智能眼镜平台概念设计 · 项目作品集 · 2025</p>
+        <p style="margin-top: 1rem; font-size: 0.85rem;">21个核心概念 · 5大主题板块 · 100+视觉素材</p>
+    </footer>
+
+    <script>
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
