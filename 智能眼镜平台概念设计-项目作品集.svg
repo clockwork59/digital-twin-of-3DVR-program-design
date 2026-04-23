@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700');
+      .title { font-family: 'Noto Sans SC', sans-serif; font-size: 48px; font-weight: 700; fill: #fff; }
+      .subtitle { font-family: 'Noto Sans SC', sans-serif; font-size: 24px; fill: #aaa; }
+      .section-title { font-family: 'Noto Sans SC', sans-serif; font-size: 32px; font-weight: 600; }
+      .body-text { font-family: 'Noto Sans SC', sans-serif; font-size: 16px; fill: #ccc; }
+      .label { font-family: 'Noto Sans SC', sans-serif; font-size: 14px; fill: #888; }
+    </style>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0d1b2a"/>
+      <stop offset="50%" style="stop-color:#1a1f3a"/>
+      <stop offset="100%" style="stop-color:#0d1b2a"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- 背景 -->
+  <rect width="100%" height="100%" fill="url(#bgGrad)"/>
+  
+  <!-- 封面标题 -->
+  <text x="960" y="200" text-anchor="middle" class="title">智能眼镜平台概念设计 · 项目作品集</text>
+  <text x="960" y="260" text-anchor="middle" class="subtitle">从平面到空间的认知革命 · 21个核心概念构建的未来蓝图</text>
+  
+  <!-- 统计信息 -->
+  <g transform="translate(560, 350)">
+    <text x="200" y="0" text-anchor="middle" font-size="48" fill="#00d4ff" font-weight="bold">21</text>
+    <text x="200" y="40" text-anchor="middle" class="label">核心概念</text>
+  </g>
+  <g transform="translate(860, 350)">
+    <text x="200" y="0" text-anchor="middle" font-size="48" fill="#a855f7" font-weight="bold">5</text>
+    <text x="200" y="40" text-anchor="middle" class="label">主题板块</text>
+  </g>
+  <g transform="translate(1160, 350)">
+    <text x="200" y="0" text-anchor="middle" font-size="48" fill="#d4a574" font-weight="bold">100+</text>
+    <text x="200" y="40" text-anchor="middle" class="label">视觉素材</text>
+  </g>
+
+  <!-- 第1章: 视角体系 -->
+  <rect x="100" y="410" width="1720" height="80" rx="10" fill="rgba(255,255,255,0.03)" stroke="#00d4ff" stroke-width="1" stroke-opacity="0.5"/>
+  <text x="140" y="450" font-family="Noto Sans SC" font-size="14" fill="#00d4ff" letter-spacing="4">CHAPTER 01</text>
+  <text x="250" y="450" class="section-title" fill="#00d4ff">视角体系</text>
+
+  <!-- 第2章: 视觉体验 -->
+  <rect x="100" y="510" width="1720" height="80" rx="10" fill="rgba(255,255,255,0.03)" stroke="#a855f7" stroke-width="1" stroke-opacity="0.5"/>
+  <text x="140" y="550" font-family="Noto Sans SC" font-size="14" fill="#a855f7" letter-spacing="4">CHAPTER 02</text>
+  <text x="250" y="550" class="section-title" fill="#a855f7">视觉体验</text>
+
+  <!-- 第3章: 信息空间 -->
+  <rect x="100" y="610" width="1720" height="80" rx="10" fill="rgba(255,255,255,0.03)" stroke="#ec4899" stroke-width="1" stroke-opacity="0.5"/>
+  <text x="140" y="650" font-family="Noto Sans SC" font-size="14" fill="#ec4899" letter-spacing="4">CHAPTER 03</text>
+  <text x="250" y="650" class="section-title" fill="#ec4899">信息空间</text>
+
+  <!-- 第4章: 时空推演 -->
+  <rect x="100" y="710" width="1720" height="80" rx="10" fill="rgba(255,255,255,0.03)" stroke="#d4a574" stroke-width="1" stroke-opacity="0.5"/>
+  <text x="140" y="750" font-family="Noto Sans SC" font-size="14" fill="#d4a574" letter-spacing="4">CHAPTER 04</text>
+  <text x="250" y="750" class="section-title" fill="#d4a574">时空推演</text>
+
+  <!-- 第5章: 总结归纳 -->
+  <rect x="100" y="810" width="1720" height="80" rx="10" fill="rgba(255,255,255,0.03)" stroke="#10b981" stroke-width="1" stroke-opacity="0.5"/>
+  <text x="140" y="850" font-family="Noto Sans SC" font-size="14" fill="#10b981" letter-spacing="4">CHAPTER 05</text>
+  <text x="250" y="850" class="section-title" fill="#10b981">总结归纳</text>
+
+</svg>
